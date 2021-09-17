@@ -22,6 +22,11 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
+        private double TotalMassOfShip;             // Define the total weight(mass) of the ship.
+
+        IMyCockpit Cockpit;                         // Define a Cockpit variable
+        List<IMyThrust> Thrusters;                  // Define thrusters list.
+
         // This file contains your actual script.
         //
         // You can either keep all your code here, or you can create separate
@@ -47,9 +52,47 @@ namespace IngameScript
         // Refer to this API
         // https://github.com/malware-dev/MDK-SE/wiki/Api-Index
 
+
+
         public Program()
         {
             // Define varaibles that are used a lot.
+
+
+
+            // Example on Defining blocks:
+
+            // ====================================================================================================================================
+            // Example 1:
+            // This looks for a block of type IMyTerminalBlock and with the name Timer Block and treats it as a variable with the name timer.
+            // ====================================================================================================================================
+            // IMyTerminalBlock timer = GridTerminalSystem.GetBlockWithName("Timer Block") as IMyTerminalBlock
+
+
+            // ====================================================================================================================================
+            // Example 2:
+            // This makes a block list called timers_list, and fills it with every block called Timer Block.
+            // ====================================================================================================================================
+            // List<IMyTerminalBlock> timers_list = new List<IMyTerminalBlock>();  
+            // GridTerminalSystem.SearchBlocksOfName("Timer Block", timers_list);
+
+            // ====================================================================================================================================
+            // Example 3:
+            // his fills a list with all the blocks of type IMyTimerBlock.
+            // ====================================================================================================================================
+            // GridTerminalSystem.GetBlocksOfType<IMyTimerBlock>(timers_list);
+
+            Cockpit = GridTerminalSystem.GetBlockWithName("Cockpit") as IMyCockpit;     // Grab a block of type cockpit named cockpit.
+
+            Thrusters = new List<IMyThrust>();                                          // create an empty list of thrusters.
+            GridTerminalSystem.GetBlocksOfType<IMyThrust>(Thrusters);                   // populate the list with thrusters.
+
+            if(Cockpit != null)
+            {
+                TotalMassOfShip = Cockpit.CalculateShipMass().TotalMass;
+            }
+
+
         }
 
         public void Save()
@@ -69,13 +112,13 @@ namespace IngameScript
             // The method itself is required, but the arguments above
             // can be removed if not needed.
 
-            PrintWtf();
+            PrintTotalMassOfShip();
         }
 
 
-        public void PrintWtf()
+        public void PrintTotalMassOfShip()
         {
-            Echo("wtf");
+            Echo(TotalMassOfShip.ToString());
         }
         
     }
