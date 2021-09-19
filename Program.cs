@@ -1,13 +1,13 @@
-﻿using Sandbox.Game.EntityComponents;
-using Sandbox.ModAPI.Ingame;
-using Sandbox.ModAPI.Interfaces;
-using SpaceEngineers.Game.ModAPI.Ingame;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using Sandbox.Game.EntityComponents;
+using Sandbox.ModAPI.Ingame;
+using Sandbox.ModAPI.Interfaces;
+using SpaceEngineers.Game.ModAPI.Ingame;
 using VRage;
 using VRage.Collections;
 using VRage.Game;
@@ -22,77 +22,35 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
-        private double TotalMassOfShip;             // Define the total weight(mass) of the ship.
+        private double maxDistance;                             // Define current max distance between ship and its waypoint.
 
-        IMyCockpit Cockpit;                         // Define a Cockpit variable
-        List<IMyThrust> Thrusters;                  // Define thrusters list.
+        private double TotalMassOfShip;                         // Define the total weight(mass) of the ship.
 
-        // This file contains your actual script.
-        //
-        // You can either keep all your code here, or you can create separate
-        // code files to make your program easier to navigate while coding.
-        //
-        // In order to add a new utility class, right-click on your project, 
-        // select 'New' then 'Add Item...'. Now find the 'Space Engineers'
-        // category under 'Visual C# Items' on the left hand side, and select
-        // 'Utility Class' in the main area. Name it in the box below, and
-        // press OK. This utility class will be merged in with your code when
-        // deploying your final script.
-        //
-        // You can also simply create a new utility class manually, you don't
-        // have to use the template if you don't want to. Just do so the first
-        // time to see what a utility class looks like.
-        // 
-        // Go to:
-        // https://github.com/malware-dev/MDK-SE/wiki/Quick-Introduction-to-Space-Engineers-Ingame-Scripts
-        //
-        // to learn more about ingame scripts.
+        private float PowerConsumption;                         // Define the total power consumption.
+
+        private List<string> CompileError;                      // Define a list of compile error messages.
+        
+        private List<string> Status;                            // Define a list of status messages.
+
+        IMyCockpit Cockpit;                                     // Define a Cockpit variable.
+
+        // =====================================================================================
+        // Power related component.
+        List<IMyReactor> Reactors;                              // Define a list of Reactors.
+
+        List<IMyBatteryBlock> Batteries;                        // Define a list of Batteries.
+
+        List<IMySolarPanel> SolarPanels;                        // Define a list of Solar panels.
+
+        // =====================================================================================
+        List<IMyThrust> Thrusters;                              // Define a list of thrusters.
 
 
-        // Refer to this API
-        // https://github.com/malware-dev/MDK-SE/wiki/Api-Index
-
-
-
+        // this is a constructor.
         public Program()
         {
-            // Define varaibles that are used a lot.
-
-
-
-            // Example on Defining blocks:
-
-            // ====================================================================================================================================
-            // Example 1:
-            // This looks for a block of type IMyTerminalBlock and with the name Timer Block and treats it as a variable with the name timer.
-            // ====================================================================================================================================
-            // IMyTerminalBlock timer = GridTerminalSystem.GetBlockWithName("Timer Block") as IMyTerminalBlock
-
-
-            // ====================================================================================================================================
-            // Example 2:
-            // This makes a block list called timers_list, and fills it with every block called Timer Block.
-            // ====================================================================================================================================
-            // List<IMyTerminalBlock> timers_list = new List<IMyTerminalBlock>();  
-            // GridTerminalSystem.SearchBlocksOfName("Timer Block", timers_list);
-
-            // ====================================================================================================================================
-            // Example 3:
-            // his fills a list with all the blocks of type IMyTimerBlock.
-            // ====================================================================================================================================
-            // GridTerminalSystem.GetBlocksOfType<IMyTimerBlock>(timers_list);
-
-            Cockpit = GridTerminalSystem.GetBlockWithName("Cockpit") as IMyCockpit;     // Grab a block of type cockpit named cockpit.
-
-            Thrusters = new List<IMyThrust>();                                          // create an empty list of thrusters.
-            GridTerminalSystem.GetBlocksOfType<IMyThrust>(Thrusters);                   // populate the list with thrusters.
-
-            if(Cockpit != null)
-            {
-                TotalMassOfShip = Cockpit.CalculateShipMass().TotalMass;
-            }
-
-
+            Setup();
+            PrintStatus();
         }
 
         public void Save()
@@ -102,24 +60,74 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            // The main entry point of the script, invoked every time
-            // one of the programmable block's Run actions are invoked,
-            // or the script updates itself. The updateSource argument
-            // describes where the update came from. Be aware that the
-            // updateSource is a  bitfield  and might contain more than 
-            // one update type.
-            // 
-            // The method itself is required, but the arguments above
-            // can be removed if not needed.
-
-            PrintTotalMassOfShip();
+            // Start of the program here.
         }
 
+        // Returns the mass of the ship as a float.
+        public float CalculateMasOfShip() { return Cockpit != null? Cockpit.CalculateShipMass().TotalMass: 0.0f; }
 
-        public void PrintTotalMassOfShip()
+        public void Setup()
         {
-            Echo(TotalMassOfShip.ToString());
+            CompileError = new List<string>();                      // Initialize CompileError to an empty string list.
+
+            // Grab a block of type cockpit named cockpit.
+            Cockpit = GridTerminalSystem.GetBlockWithName("Main Cockpit") as IMyCockpit;
+            if (Cockpit == null)
+            {
+                CompileError.Add("- Main Cockpit Not found");
+            }
+
+            // create an empty list of thrusters.
+            Thrusters = new List<IMyThrust>(); 
+            // populate the list with thrusters.
+            GridTerminalSystem.GetBlocksOfType<IMyThrust>(Thrusters); 
+            if(Thrusters.Count == 0) 
+            {
+                CompileError.Add("- Thrusters Not found");
+            }
+
+            // Grabs the power component in the ship.
+            Reactors = new List<IMyReactor>();
+            GridTerminalSystem.GetBlocksOfType<IMyReactor>(Reactors);
+
+            Batteries = new List<IMyBatteryBlock>();
+            GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(Batteries);
+
+            SolarPanels = new List<IMySolarPanel>();
+            GridTerminalSystem.GetBlocksOfType<IMySolarPanel>(SolarPanels);
         }
-        
+
+        public void PrintStatus() 
+        {
+            if(CompileError.Count <= 0)                     // if compile error is less than zero.
+            {
+                Echo("Compiled Successfully");              // then echo compiled successfully and return.
+            }
+            else 
+            {
+                Echo("Compiled Erros:");
+                // otherwise.
+                foreach (string error in CompileError)
+                {
+                    Echo(error);
+                }
+            }
+        }
+
+
+        // return the maximum distance from ship to a waypoint
+        public double CalculateMaxDistance(VRageMath.Vector3D waypoint )
+        {
+            VRageMath.Vector3D currentPosition = new VRageMath.Vector3D(0 ,0 ,0);
+
+            if(Cockpit != null) 
+            {
+                currentPosition = Cockpit.Position;
+            }
+            
+            return 3.14 * (VRageMath.Vector3D.Distance(currentPosition, waypoint) / 2);
+        }
+
+        // end of code.
     }
 }
