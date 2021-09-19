@@ -1,0 +1,29 @@
+Example on Defining blocks:
+
+====================================================================================================================================
+Example 1:
+This looks for a block of type IMyTerminalBlock and with the name Timer Block and treats it as a variable with the name timer.
+====================================================================================================================================
+IMyTerminalBlock timer = GridTerminalSystem.GetBlockWithName("Timer Block") as IMyTerminalBlock
+
+
+====================================================================================================================================
+Example 2:
+This makes a block list called timers_list, and fills it with every block called Timer Block.
+====================================================================================================================================
+List<IMyTerminalBlock> timers_list = new List<IMyTerminalBlock>();  
+GridTerminalSystem.SearchBlocksOfName("Timer Block", timers_list);
+
+====================================================================================================================================
+Example 3:
+his fills a list with all the blocks of type IMyTimerBlock.
+====================================================================================================================================
+GridTerminalSystem.GetBlocksOfType<IMyTimerBlock>(timers_list);
+
+
+Go to:
+https://github.com/malware-dev/MDK-SE/wiki/Quick-Introduction-to-Space-Engineers-Ingame-Scripts
+to learn more about ingame scripts.
+
+Refer to this API
+https://github.com/malware-dev/MDK-SE/wiki/Api-Index
